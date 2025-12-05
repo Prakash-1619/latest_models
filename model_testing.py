@@ -4,8 +4,45 @@ import numpy as np
 import ast
 from model_testing1 import predict_with_area  # replace file name
 
+# ---------------------------------------------------
+# CLEAN LIST COLUMN FUNCTION
+# ---------------------------------------------------
+def clean_list_column(x):
+    """
+    Converts string representations of lists into real python lists.
+    Handles cases like:
+      "['1 B/R', '2 B/R']"
+      "['0-5' '6-10' '11-20']"
+    """
+    if pd.isna(x):
+        return []
 
+    try:
+        result = ast.literal_eval(x)
+        if isinstance(result, list):
+            return [str(i).strip() for i in result]
+    except:
+        pass
 
+    # Remove brackets and quotes
+    x = x.replace("[", "").replace("]", "").replace('"', '').replace("'", "").strip()
+    
+    # Split by whitespace but preserve multi-word items like '1 B/R'
+    items = []
+    buffer = ""
+    for token in x.split():
+        if buffer:
+            buffer += " " + token
+            items.append(buffer)
+            buffer = ""
+        else:
+            if "/" in token or "-" in token or token.isalpha():
+                items.append(token)
+            else:
+                buffer = token
+    if buffer:
+        items.append(buffer)
+    return items
 
 # ---------------------------------------------------
 # LOAD RANGE FILE
@@ -13,9 +50,9 @@ from model_testing1 import predict_with_area  # replace file name
 range_df = pd.read_csv("column_input_ranges.csv")
 
 # CLEAN LIST COLUMNS
-#list_cols = ["rooms_en", "floor_bin", "has_parking", "swimming_pool", "balcony", "elevator"]
-#for col in list_cols:
-    #range_df[col] = range_df[col].apply(clean_list_column)
+list_cols = ["rooms_en", "floor_bin", "has_parking", "swimming_pool", "balcony", "elevator"]
+for col in list_cols:
+    range_df[col] = range_df[col].apply(clean_list_column)
 
 # AREA LIST
 area_list = range_df["area_name_en"].tolist()
@@ -50,16 +87,13 @@ if area != "-- Select Area --":
     )
 
     # CLEANED DROPDOWN VALUES
-    rooms_options = row['rooms_en'].tolist()
-    #['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R']
-    floor_bin_options = row['floor_bin'].tolist()
-    #['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
-                       #'51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
-                       #'71-80', 'Duplex']
-        
-    default_index = 1   
-    rooms_en = st.selectbox("Number of Rooms", options=rooms_options)# index= default_index)
-    floor_bin = st.selectbox("Floor Level", options=floor_bin_options)#index=default_index)
+    rooms_options = ["-- Select Room Type --"] + row["rooms_en"]
+    floor_bin_options = ["-- Select Floor Range --"] + row["floor_bin"]
+
+    # Default selection index
+    rooms_en = st.selectbox("Number of Rooms", options=rooms_options, index=1)
+    floor_bin = st.selectbox("Floor Level", options=floor_bin_options, index=1)
+
     # Boolean features
     has_parking   = to_bool(st.selectbox("Parking", ["Yes", "No"]))
     swimming_pool = to_bool(st.selectbox("Swimming Pool", ["Yes", "No"]))
@@ -82,7 +116,7 @@ if area != "-- Select Area --":
         }
 
         final_df = predict_with_area(input_data)
-        
+
         if final_df is not None:
             st.success("✅ Prediction Successful!")
 
