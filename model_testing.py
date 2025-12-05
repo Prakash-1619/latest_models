@@ -50,9 +50,9 @@ if area != "-- Select Area --":
     )
 
     # CLEANED DROPDOWN VALUES
-    rooms_options = row['rooms_en']
+    rooms_options = row['rooms_en'].tolist()
     #['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R']
-    floor_bin_options = row['floor_bin']
+    floor_bin_options = row['floor_bin'].tolist()
     #['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
                        #'51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
                        #'71-80', 'Duplex']
