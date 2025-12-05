@@ -125,12 +125,49 @@ if area != "-- Select Area --":
 
         final_df = predict_with_area(input_data)
 
+        import plotly.express as px
+        import pandas as pd
+        import streamlit as st
+        
         if final_df is not None:
             st.success("✅ Prediction Successful!")
-
+        
             st.write("### Last 10 Months Forecast")
             st.dataframe(final_df.tail(10))
-
+        
+            # Prepare Data
             df_chart = final_df.copy()
             df_chart["month"] = pd.to_datetime(df_chart["month"], errors="coerce")
-            st.line_chart(df_chart.set_index("month")["median_price"])
+        
+            # Add a column for color based on month
+            df_chart["color"] = df_chart["month"].apply(lambda x: "Before Nov 2025" if x < pd.Timestamp("2025-11-01") else "Nov 2025 and After")
+        
+            # Create line chart with color
+            fig = px.line(
+                df_chart,
+                x="month",
+                y="median_price",
+                color="color",
+                color_discrete_map={
+                    "Before Nov 2025": "blue",
+                    "Nov 2025 and After": "red"
+                },
+                markers=True,  # adds a bubble for every point
+                title="Median Price Forecast"
+            )
+        
+            # Highlight Nov 2025 point with a bigger bubble
+            nov_point = df_chart[df_chart["month"] == pd.Timestamp("2025-11-01")]
+            if not nov_point.empty:
+                fig.add_scatter(
+                    x=nov_point["month"],
+                    y=nov_point["median_price"],
+                    mode="markers+text",
+                    marker=dict(size=12, color="orange", symbol="circle"),
+                    text=["Nov 2025"],
+                    textposition="top center",
+                    showlegend=False
+                )
+        
+            st.plotly_chart(fig, use_container_width=True)
+
