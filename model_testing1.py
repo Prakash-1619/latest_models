@@ -96,6 +96,7 @@ def predict_with_area(input_data):
 
         historic_area["median_price"] = smoothed[:, 1]
 
+        # Replace last historic with first forecast
         if not forecast_area.empty:
             historic_area.loc[historic_area.index[-1], "median_price"] = forecast_area.iloc[0]["median_price"]
 
@@ -103,57 +104,5 @@ def predict_with_area(input_data):
     return final_df
 
 
-# -----------------------------------------------------
-# 5. STREAMLIT UI
-# -----------------------------------------------------
-st.title("🏡 Real Estate Price Predictor (Decision Tree + SARIMA Forecast)")
-st.write("Predict next 6 months median sale price for Dubai areas.")
 
-# Load area list dynamically
-available_areas = sorted([
-    f.replace("dt_model_", "").replace(".pkl", "").replace("_", " ").strip()
-    for f in os.listdir(models_dir)
-    if f.endswith(".pkl")
-])
-
-area = st.selectbox("Select Area", available_areas)
-
-# User Inputs
-st.subheader("Enter Property Details")
-
-procedure_area = st.number_input("Procedure Area (sq.m)", min_value=20, max_value=2000, value=100)
-room = st.number_input("Rooms", min_value=1, max_value=10, value=2)
-bath = st.number_input("Bathrooms", min_value=1, max_value=10, value=2)
-
-# Convert YES/NO → 1/0
-def yes_no_to_binary(x):
-    return 1 if x == "Yes" else 0
-
-swimming_pool = yes_no_to_binary(st.selectbox("Swimming Pool", ["No", "Yes"]))
-balcony = yes_no_to_binary(st.selectbox("Balcony", ["No", "Yes"]))
-elevator = yes_no_to_binary(st.selectbox("Elevator", ["No", "Yes"]))
-metro = yes_no_to_binary(st.selectbox("Metro Access", ["No", "Yes"]))
-has_parking = yes_no_to_binary(st.selectbox("Parking", ["No", "Yes"]))
-
-if st.button("Predict Price"):
-    input_data = {
-        "area_name_en": area,
-        "procedure_area": procedure_area,
-        "room": room,
-        "bath": bath,
-        "balcony": balcony,
-        "elevator": elevator,
-        "parking": has_parking,
-        "swimming_pool": swimming_pool,
-        "metro": metro
-    }
-
-    result = predict_with_area(input_data)
-
-    if result is not None:
-        st.success("Prediction successful!")
-        st.write(result)
-
-        # Line chart
-        st.line_chart(result.set_index("month")["median_price"])
 
