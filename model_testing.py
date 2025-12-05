@@ -82,43 +82,12 @@ if area != "-- Select Area --":
 
         final_df = predict_with_area(input_data)
         
-        import matplotlib.pyplot as plt
-        import pandas as pd
-        import streamlit as st
-        
         if final_df is not None:
             st.success("✅ Prediction Successful!")
-        
+
             st.write("### Last 10 Months Forecast")
             st.dataframe(final_df.tail(10))
-        
+
             df_chart = final_df.copy()
             df_chart["month"] = pd.to_datetime(df_chart["month"], errors="coerce")
-        
-            # Create figure
-            plt.figure(figsize=(10, 5))
-        
-            # Plot line
-            plt.plot(df_chart["month"], df_chart["median_price"], marker='o', color='blue', label='Median Price')
-        
-            # Add vertical line at Nov 2025
-            nov_date = pd.Timestamp("2025-11-01")
-            plt.axvline(x=nov_date, color='red', linestyle='--', linewidth=2, label='Nov 2025')
-        
-            # Optional: highlight Nov 2025 point with a bigger bubble
-            nov_point = df_chart[df_chart["month"] == nov_date]
-            if not nov_point.empty:
-                plt.scatter(nov_point["month"], nov_point["median_price"], color='orange', s=100, zorder=5)
-                plt.text(nov_point["month"].values[0], nov_point["median_price"].values[0],
-                         "Nov 2025", fontsize=10, verticalalignment='bottom', horizontalalignment='right')
-        
-            # Labels and title
-            plt.xlabel("Month")
-            plt.ylabel("Median Price")
-            plt.title("Median Price Forecast")
-            plt.legend()
-            plt.xticks(rotation=45)
-        
-            # Show plot in Streamlit
-            st.pyplot(plt.gcf())
-
+            st.line_chart(df_chart.set_index("month")["median_price"])
