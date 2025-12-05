@@ -4,52 +4,8 @@ import numpy as np
 import ast
 from model_testing1 import predict_with_area  # replace file name
 
-# ---------------------------------------------------
-# CLEAN LIST COLUMN FUNCTION
-# ---------------------------------------------------
-def clean_list_column(x):
-    """
-    Converts string representations of lists into real python lists.
-    Handles cases like:
-      "['1 B/R', '2 B/R']"
-      "['0-5' '6-10' '11-20']"
-    """
-    if pd.isna(x):
-        return []
 
-    try:
-        # Safely evaluate strings like "['1 B/R', '2 B/R']"
-        result = ast.literal_eval(x)
-        # Ensure it's a list
-        if isinstance(result, list):
-            return [str(i).strip() for i in result]
-    except:
-        pass
 
-    # Remove brackets and quotes
-    x = x.replace("[", "").replace("]", "").replace('"', '').replace("'", "").strip()
-
-    # Split by comma first, then fallback to whitespace
-    if "," in x:
-        parts = [item.strip() for item in x.split(",")]
-    else:
-        # Split by whitespace but preserve multi-word items (like '1 B/R')
-        parts = []
-        buffer = ""
-        for token in x.split():
-            if buffer:
-                buffer += " " + token
-                parts.append(buffer)
-                buffer = ""
-            else:
-                if "/" in token or token.isalpha() or token.isdigit():
-                    parts.append(token)
-                else:
-                    buffer = token
-        if buffer:
-            parts.append(buffer)
-
-    return parts
 
 # ---------------------------------------------------
 # LOAD RANGE FILE
@@ -94,10 +50,12 @@ if area != "-- Select Area --":
     )
 
     # CLEANED DROPDOWN VALUES
-    rooms_options = ['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R']
-    floor_bin_options = ['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
-                       '51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
-                       '71-80', 'Duplex']
+    rooms_options = row['rooms_en']
+    #['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R']
+    floor_bin_options = row['floor_bin']
+    #['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
+                       #'51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
+                       #'71-80', 'Duplex']
         
         
     rooms_en = st.selectbox("Number of Rooms", options=rooms_options, index=2)
