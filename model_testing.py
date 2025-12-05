@@ -82,7 +82,7 @@ if area != "-- Select Area --":
 
         final_df = predict_with_area(input_data)
         
-        import plotly.graph_objects as go
+        import matplotlib.pyplot as plt
         import pandas as pd
         import streamlit as st
         
@@ -92,34 +92,33 @@ if area != "-- Select Area --":
             st.write("### Last 10 Months Forecast")
             st.dataframe(final_df.tail(10))
         
-            # Prepare Data
             df_chart = final_df.copy()
             df_chart["month"] = pd.to_datetime(df_chart["month"], errors="coerce")
         
-            # Create line chart
-            fig = go.Figure()
+            # Create figure
+            plt.figure(figsize=(10, 5))
         
-            # Median price line
-            fig.add_trace(go.Scatter(
-                x=df_chart["month"],
-                y=df_chart["median_price"],
-                mode="lines+markers",
-                name="Median Price",
-                line=dict(color="blue"),
-                marker=dict(size=6)
-            ))
+            # Plot line
+            plt.plot(df_chart["month"], df_chart["median_price"], marker='o', color='blue', label='Median Price')
         
             # Add vertical line at Nov 2025
             nov_date = pd.Timestamp("2025-11-01")
-            fig.add_vline(x=nov_date, line=dict(color="red", width=2, dash="dash"), annotation_text="Nov 2025", annotation_position="top right")
+            plt.axvline(x=nov_date, color='red', linestyle='--', linewidth=2, label='Nov 2025')
         
-            fig.update_layout(
-                title="Median Price Forecast",
-                xaxis_title="Month",
-                yaxis_title="Median Price",
-                xaxis=dict(tickformat="%b %Y"),
-                template="plotly_white"
-            )
+            # Optional: highlight Nov 2025 point with a bigger bubble
+            nov_point = df_chart[df_chart["month"] == nov_date]
+            if not nov_point.empty:
+                plt.scatter(nov_point["month"], nov_point["median_price"], color='orange', s=100, zorder=5)
+                plt.text(nov_point["month"].values[0], nov_point["median_price"].values[0],
+                         "Nov 2025", fontsize=10, verticalalignment='bottom', horizontalalignment='right')
         
-            st.plotly_chart(fig, use_container_width=True)
+            # Labels and title
+            plt.xlabel("Month")
+            plt.ylabel("Median Price")
+            plt.title("Median Price Forecast")
+            plt.legend()
+            plt.xticks(rotation=45)
+        
+            # Show plot in Streamlit
+            st.pyplot(plt.gcf())
 
