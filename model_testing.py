@@ -57,9 +57,9 @@ if area != "-- Select Area --":
                        #'51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
                        #'71-80', 'Duplex']
         
-        
-    rooms_en = st.selectbox("Number of Rooms", options=rooms_options, index=2)
-    floor_bin = st.selectbox("Floor Level", options=floor_bin_options, index=1)
+    default_index = 1   
+    rooms_en = st.selectbox("Number of Rooms", options=rooms_options, index= default_index)
+    floor_bin = st.selectbox("Floor Level", options=floor_bin_options, index=default_index)
     # Boolean features
     has_parking   = to_bool(st.selectbox("Parking", ["Yes", "No"]))
     swimming_pool = to_bool(st.selectbox("Swimming Pool", ["Yes", "No"]))
