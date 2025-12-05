@@ -84,7 +84,7 @@ if area != "-- Select Area --":
         
         if final_df is not None:
             #st.success("✅ Prediction Successful!")
-            print(f'predicted_price (11-2025) : {final_df[final_df] == '2025-11-01']['median_price']})
+            print(f'predicted_price (11-2025) : {final_df[final_df['month'] == '2025-11-01']['median_price']})
             st.write("### Last 10 Months Forecast")
             st.dataframe(final_df.tail(10))
 
