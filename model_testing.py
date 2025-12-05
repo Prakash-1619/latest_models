@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from your_module_file import predict_with_area   # replace file name
+from model_testing1 import predict_with_area   # replace file name
 
 # Load ranges file
 range_df = pd.read_csv("column_input_ranges.csv")
