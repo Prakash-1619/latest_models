@@ -54,7 +54,7 @@ if area != "-- Select Area --":
     
     floor_bin_options = ['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
                        '51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
-                       '71-80', 'Duplex']row['floor_bin'].tolist()
+                       '71-80', 'Duplex']#row['floor_bin'].tolist()
         
     default_index = 1   
     rooms_en = st.selectbox("Number of Rooms", options=rooms_options)# index= default_index)
