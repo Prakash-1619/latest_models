@@ -13,9 +13,9 @@ from model_testing1 import predict_with_area  # replace file name
 range_df = pd.read_csv("column_input_ranges.csv")
 
 # CLEAN LIST COLUMNS
-list_cols = ["rooms_en", "floor_bin", "has_parking", "swimming_pool", "balcony", "elevator"]
-for col in list_cols:
-    range_df[col] = range_df[col].apply(clean_list_column)
+#list_cols = ["rooms_en", "floor_bin", "has_parking", "swimming_pool", "balcony", "elevator"]
+#for col in list_cols:
+    #range_df[col] = range_df[col].apply(clean_list_column)
 
 # AREA LIST
 area_list = range_df["area_name_en"].tolist()
