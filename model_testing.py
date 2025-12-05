@@ -94,10 +94,14 @@ if area != "-- Select Area --":
     )
 
     # CLEANED DROPDOWN VALUES
-    rooms_en  = st.selectbox("Room Type", ['Studio' '2 B/R' '1 B/R' '3 B/R' 'PENTHOUSE' 'More than 3B/R'])
-    floor_bin = st.selectbox("Floor Range",	['1-10' '11-20' '21-30' '31-40' '41-50' 'Below 1st floor' '51-60' '61-70'
- '81-90' '101-110' '91-100' '71-80' 'Other'])
-
+    rooms_options = ['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R']
+    floor_bin_options = ['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
+                       '51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
+                       '71-80', 'Duplex']
+        
+        
+    rooms_en = st.selectbox("Number of Rooms", options=rooms_options, index=2)
+    floor_bin = st.selectbox("Floor Level", options=floor_bin_options, index=1)
     # Boolean features
     has_parking   = to_bool(st.selectbox("Parking", ["Yes", "No"]))
     swimming_pool = to_bool(st.selectbox("Swimming Pool", ["Yes", "No"]))
