@@ -84,7 +84,7 @@ with tab1:
 
 # ----------------- TAB 2 -----------------
 with tab2:
-    st.header("Monthly Trend for Selected Features")
+    st.header("Monthly Trend + Forecast")
 
     # Feature selection
     sel_area = st.selectbox("Select Area", ["-- Select Area --"] + area_list, key="trend_area")
@@ -92,15 +92,16 @@ with tab2:
     sel_floor = st.selectbox("Select Floor Bin", ['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
                                                   '51-60', 'Other', '-9-0', '61-70', 'Top floor', '91-100', '81-90',
                                                   '71-80', 'Duplex'], key="trend_floor")
-
     sel_parking   = st.selectbox("Parking", ["Yes", "No"], key="trend_parking")
     sel_pool      = st.selectbox("Swimming Pool", ["Yes", "No"], key="trend_pool")
     sel_balcony   = st.selectbox("Balcony", ["Yes", "No"], key="trend_balcony")
     sel_elevator  = st.selectbox("Elevator", ["Yes", "No"], key="trend_elevator")
     sel_metro     = st.selectbox("Metro Access", ["Yes", "No"], key="trend_metro")
 
-    if st.button("Show Trend"):
-        # Filter data_for_dash
+    if st.button("Show Trend + Forecast"):
+        # -------------------------
+        # Filter historical data
+        # -------------------------
         trend_df = data_for_dash[
             (data_for_dash["area_name_en"] == sel_area) &
             (data_for_dash["rooms_en"] == sel_rooms) &
@@ -112,18 +113,22 @@ with tab2:
             (data_for_dash["metro"] == to_bool(sel_metro))
         ].copy()
 
-        # Aggregate monthly median
-        monthly_trend = trend_df.groupby('month')['median_price'].median().reset_index()
+        if trend_df.empty:
+            st.warning("No historical data found for selected features!")
+        else:
+            # Convert date to month start
+            trend_df['month'] = pd.to_datetime(trend_df['instance_date'], errors='coerce')
+            trend_df = trend_df.set_index('month').resample('MS').median(numeric_only=True)
+            trend_df.rename(columns={'meter_sale_price': 'median_price'}, inplace=True)
+            trend_df['median_price'] = trend_df['median_price'].interpolate().bfill()
+            trend_df = trend_df.reset_index()
 
-        # Fill missing months
-        monthly_trend = monthly_trend.set_index('month').resample('MS').median()
-        monthly_trend = monthly_trend.interpolate(method='linear').bfill().reset_index()
-
-        # Add prediction if available
-        if sel_area != "-- Select Area --":
+            # -------------------------
+            # Predict next value using model
+            # -------------------------
             input_data = {
                 "area_name_en": sel_area,
-                "procedure_area": monthly_trend['median_price'].median(),  # use median as placeholder
+                "procedure_area": trend_df['median_price'].median(),  # use median as proxy
                 "has_parking": to_bool(sel_parking),
                 "floor_bin": sel_floor,
                 "rooms_en": sel_rooms,
@@ -132,11 +137,21 @@ with tab2:
                 "elevator": to_bool(sel_elevator),
                 "metro": to_bool(sel_metro)
             }
-            forecast_df = predict_with_area(input_data)
-            combined_df = pd.concat([monthly_trend, forecast_df], ignore_index=True, sort=False)
-        else:
-            combined_df = monthly_trend
 
-        st.write("### Monthly Median Price Trend")
-        st.dataframe(combined_df)
-        st.line_chart(combined_df.set_index("month")["median_price"])
+            forecast_df = predict_with_area(input_data)  # same as Tab1
+            # Optionally apply growth factor to forecast months
+            growth_factor = 1.02  # 2% growth per month, adjust as needed
+            forecast_df['median_price'] = forecast_df['median_price'] * growth_factor
+
+            # -------------------------
+            # Combine historical + forecast
+            # -------------------------
+            combined_df = pd.concat([trend_df, forecast_df], ignore_index=True, sort=False)
+
+            # -------------------------
+            # Display
+            # -------------------------
+            st.write("### Historical + Forecast")
+            st.dataframe(combined_df)
+            combined_df['month_dt'] = pd.to_datetime(combined_df['month'])
+            st.line_chart(combined_df.set_index('month_dt')['median_price'])
