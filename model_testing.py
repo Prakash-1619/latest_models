@@ -23,7 +23,7 @@ area_list = range_df["area_name_en"].tolist()
 # ---------------------------------------------------
 # STREAMLIT UI
 # ---------------------------------------------------
-st.title("🏡 Dubai Real Estate Price Predictor (18 Areas)")
+st.title("Dubai Real Estate Price Predictor")
 
 # Step 1 — Area Selection
 area = st.selectbox("Select Area", ["-- Select Area --"] + area_list)
