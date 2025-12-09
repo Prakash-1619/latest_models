@@ -13,8 +13,10 @@ area_list = range_df["area_name_en"].tolist()
 
 # LOAD DASH DATA
 data_for_dash = pd.read_csv("Data_data_columns/data_for_dash.csv")
-data_for_dash['month'] = pd.to_datetime(data_for_dash['year_month'], errors='coerce')
+data_for_dash['instance_date'] = pd.to_datetime(data_for_dash['instance_date'], errors='coerce')
+data_for_dash['month'] = data_for_dash['instance_date'].dt.to_period('M')
 
+ 
 # YES/NO → 1/0
 to_bool = lambda x: 1 if x == "Yes" else 0
 
