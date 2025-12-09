@@ -82,11 +82,13 @@ with tab1:
                 df_chart["month"] = pd.to_datetime(df_chart["month"], errors="coerce")
                 st.line_chart(df_chart.set_index("month")["median_price"])
 
-# ----------------- TAB 2 -----------------
-with tab2:
-    st.header("Monthly Trend + Forecast")
 
-    # Feature selection
+from statsmodels.nonparametric.smoothers_lowess import lowess
+
+with tab2:
+    st.header("Monthly Trend + Forecast (Smoothed)")
+
+    # Feature selection (same as before)
     sel_area = st.selectbox("Select Area", ["-- Select Area --"] + area_list, key="trend_area")
     sel_rooms = st.selectbox("Select Rooms", ['1 B/R', 'Studio', '2 B/R', '3 B/R', 'PENTHOUSE', 'More than 3B/R'], key="trend_rooms")
     sel_floor = st.selectbox("Select Floor Bin", ['1-10', '11-20', '41-50', '21-30', 'Below 1st floor', '31-40',
@@ -98,7 +100,7 @@ with tab2:
     sel_elevator  = st.selectbox("Elevator", ["Yes", "No"], key="trend_elevator")
     sel_metro     = st.selectbox("Metro Access", ["Yes", "No"], key="trend_metro")
 
-    if st.button("Show Trend + Forecast"):
+    if st.button("Show Smoothed Trend + Forecast"):
         # -------------------------
         # Filter historical data
         # -------------------------
@@ -116,12 +118,24 @@ with tab2:
         if trend_df.empty:
             st.warning("No historical data found for selected features!")
         else:
-            # Convert date to month start
-            trend_df['month'] = pd.to_datetime(trend_df['instance_date'], errors='coerce')
-            trend_df = trend_df.set_index('month').resample('MS').median(numeric_only=True)
+            # Convert to datetime and remove duplicates
+            trend_df['month'] = pd.to_datetime(trend_df['instance_date'], errors='coerce').dt.to_period('MS')
+            trend_df = trend_df.drop_duplicates(subset='month')
+
+            # Aggregate monthly median price
+            trend_df = trend_df.groupby('month')['meter_sale_price'].median().reset_index()
             trend_df.rename(columns={'meter_sale_price': 'median_price'}, inplace=True)
+
+            # Interpolate/backfill missing months
+            trend_df = trend_df.set_index('month').resample('MS').median()
             trend_df['median_price'] = trend_df['median_price'].interpolate().bfill()
             trend_df = trend_df.reset_index()
+
+            # -------------------------
+            # Apply LOWESS smoothing only on historical trend
+            # -------------------------
+            smoothed = lowess(trend_df['median_price'], trend_df['month'].astype(str), frac=0.5)
+            trend_df['median_price_smooth'] = smoothed[:, 1]
 
             # -------------------------
             # Predict next value using model
@@ -138,20 +152,21 @@ with tab2:
                 "metro": to_bool(sel_metro)
             }
 
-            forecast_df = predict_with_area(input_data)  # same as Tab1
-            # Optionally apply growth factor to forecast months
-            growth_factor = 1.02  # 2% growth per month, adjust as needed
+            forecast_df = predict_with_area(input_data)
+            growth_factor = 1.02
             forecast_df['median_price'] = forecast_df['median_price'] * growth_factor
 
             # -------------------------
-            # Combine historical + forecast
+            # Combine smoothed historical + forecast
             # -------------------------
-            combined_df = pd.concat([trend_df, forecast_df], ignore_index=True, sort=False)
+            trend_df_for_plot = trend_df[['month', 'median_price_smooth']].copy()
+            trend_df_for_plot.rename(columns={'median_price_smooth': 'median_price'}, inplace=True)
+            combined_df = pd.concat([trend_df_for_plot, forecast_df], ignore_index=True, sort=False)
 
             # -------------------------
             # Display
             # -------------------------
-            st.write("### Historical + Forecast")
+            st.write("### Smoothed Historical + Forecast")
             st.dataframe(combined_df)
             combined_df['month_dt'] = pd.to_datetime(combined_df['month'])
             st.line_chart(combined_df.set_index('month_dt')['median_price'])
